@@ -177,7 +177,7 @@ def test_create():
     ]
     tags = ["foo", "bar"]
     response = client.create("Foo Bar", description="test dataset",
-        columns=columns, tags=tags, row_identifier="bar")
+        columns=columns, tags=tags, row_identifier="bar", display_type = "map")
 
     request = adapter.request_history[0]
     request_payload = json.loads(request.text) # can't figure out how to use .json
@@ -188,6 +188,9 @@ def test_create():
 
     for column_key in ["fieldName", "name", "dataTypeName"]:
         assert column_key in request_payload["columns"][0]
+
+    assert "displayType" in request_payload
+    assert request_payload["displayType"] == "map"
 
     # Test response
     assert isinstance(response, dict)

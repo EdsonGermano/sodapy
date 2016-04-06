@@ -86,6 +86,7 @@ class Socrata(object):
             tags : list of tag strings
             row_identifier : field name of primary key
             new_backend : whether to create the dataset in the new backend
+            display_type: The type of display used by this view e.g. map, table.
 
         WARNING: This api endpoint might be deprecated.
         '''
@@ -100,6 +101,8 @@ class Socrata(object):
             payload["metadata"] = {
                 "rowIdentifier": kwargs.pop("row_identifier", None)
             }
+        if "display_type" in kwargs:
+            payload["displayType"] = kwargs.pop("display_type", None)
 
         payload.update(kwargs)
         payload = _clear_empty_values(payload)
