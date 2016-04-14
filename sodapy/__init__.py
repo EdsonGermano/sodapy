@@ -89,8 +89,6 @@ class Socrata(object):
             display_type: The type of display used by this view e.g. map, table.
             view_type: ???
             metadata: arbitrary KV pairs
-
-        WARNING: This api endpoint might be deprecated.
         '''
         new_backend = kwargs.pop("new_backend", False)
         resource = "/api/views.json"
@@ -109,10 +107,46 @@ class Socrata(object):
         if "view_type" in kwargs:
             payload["viewType"] = kwargs.pop("view_type", None)
 
+        if "view_type" in kwargs:
+            payload["viewType"] = kwargs.pop("view_type", None)
+
         payload.update(kwargs)
         payload = _clear_empty_values(payload)
 
         return self._perform_update("post", resource, payload)
+
+
+    def update(self, dataset_identifier, **kwargs):
+        resource = "/api/views/{fourfour}".format(
+            fourfour = dataset_identifier
+        )
+        payload = _clear_empty_values(kwargs)
+        self._perform_update("put", resource, payload)
+
+    def add_column(self, dataset_identifier, column):
+        resource = "/api/views/{fourfour}/columns".format(
+            fourfour = dataset_identifier
+        )
+        return self._perform_update("post", resource, column)
+
+    def delete_column(self, dataset_identifier, col_id):
+        resource = "/api/views/{fourfour}/columns/{col_id}".format(
+            fourfour = dataset_identifier,
+            col_id = col_id
+        )
+        return self._perform_request("delete", resource)
+
+    def get_columns(self, dataset_identifier):
+        resource = "/api/views/{fourfour}/columns".format(
+            fourfour = dataset_identifier
+        )
+        return self._perform_request("get", resource)
+
+    def create_working_copy(self, dataset_identifier):
+        resource = "/views/{fourfour}/publication?method=copySchema".format(
+            fourfour = dataset_identifier
+        )
+        return self._perform_request("post", resource)
 
     def set_permission(self, dataset_identifier, permission="private", content_type="json"):
         '''
