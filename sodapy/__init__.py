@@ -349,6 +349,9 @@ class Socrata(object):
         '''
         self.session.close()
 
+    def set_cookie(self, cookie):
+        self.session.headers.update({"Cookie": cookie})
+
 
 # helper methods
 def _raise_for_status(response):
