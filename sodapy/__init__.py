@@ -76,6 +76,7 @@ class Socrata(object):
         if not isinstance(timeout, (int, float)):
             raise TypeError("Timeout must be numeric.")
         self.timeout = timeout
+        self.ssl_verify = True
 
     def create(self, name, **kwargs):
         '''
@@ -319,7 +320,7 @@ class Socrata(object):
         # set a timeout, just to be safe
         kwargs["timeout"] = self.timeout
 
-        response = getattr(self.session, request_type)(uri, **kwargs)
+        response = getattr(self.session, request_type)(uri, verify=self.ssl_verify, **kwargs)
 
         # handle errors
         if response.status_code not in (200, 202):
@@ -352,8 +353,8 @@ class Socrata(object):
     def set_cookie(self, cookie):
         self.session.headers.update({"Cookie": cookie})
 
-    def set_ssl_verification(self, bool):
-        self.ssl_verify = bool
+    def set_ssl_verification(self, enabled):
+        self.ssl_verify = enabled
 
 
 # helper methods
