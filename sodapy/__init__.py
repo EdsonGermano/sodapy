@@ -350,11 +350,11 @@ class Socrata(object):
         '''
         self.session.close()
 
-    def set_cookie(self, cookie):
-        self.session.headers.update({"Cookie": cookie})
+    def set_ssl_verification(self, bool):
+        self.ssl_verify = bool
 
-    def set_ssl_verification(self, enabled):
-        self.ssl_verify = enabled
+    def set_header(self, header_name, header_value):
+        self.session.headers.update({header_name: header_value})
 
 
 # helper methods
