@@ -19,7 +19,7 @@ class Socrata(object):
         from sodapy import Socrata
         client = Socrata("opendata.socrata.com", None)
     '''
-    def __init__(self, domain, app_token, username=None, password=None,
+    def __init__(self, domain, app_token, core_host, username=None, password=None,
                  access_token=None, session_adapter=None, timeout=10):
         '''
         The required arguments are:
@@ -47,6 +47,7 @@ class Socrata(object):
         if not domain:
             raise Exception("A domain is required.")
         self.domain = domain
+        self.core_host = core_host
 
         # set up the session with proper authentication crendentials
         self.session = requests.Session()
@@ -71,7 +72,7 @@ class Socrata(object):
                                session_adapter["adapter"])
             self.uri_prefix = session_adapter["prefix"]
         else:
-            self.uri_prefix = "https://"
+            self.uri_prefix = "http://"
 
         if not isinstance(timeout, (int, float)):
             raise TypeError("Timeout must be numeric.")
@@ -92,7 +93,7 @@ class Socrata(object):
             metadata: arbitrary KV pairs
         '''
         new_backend = kwargs.pop("new_backend", False)
-        resource = "/api/views.json"
+        resource = "/views.json"
         if new_backend:
             resource += "?nbe=true"
 
@@ -118,27 +119,27 @@ class Socrata(object):
 
 
     def update(self, dataset_identifier, **kwargs):
-        resource = "/api/views/{fourfour}".format(
+        resource = "/views/{fourfour}".format(
             fourfour = dataset_identifier
         )
         payload = _clear_empty_values(kwargs)
         self._perform_update("put", resource, payload)
 
     def add_column(self, dataset_identifier, column):
-        resource = "/api/views/{fourfour}/columns".format(
+        resource = "/views/{fourfour}/columns".format(
             fourfour = dataset_identifier
         )
         return self._perform_update("post", resource, column)
 
     def delete_column(self, dataset_identifier, col_id):
-        resource = "/api/views/{fourfour}/columns/{col_id}".format(
+        resource = "/views/{fourfour}/columns/{col_id}".format(
             fourfour = dataset_identifier,
             col_id = col_id
         )
         return self._perform_request("delete", resource)
 
     def get_columns(self, dataset_identifier):
-        resource = "/api/views/{fourfour}/columns".format(
+        resource = "/views/{fourfour}/columns".format(
             fourfour = dataset_identifier
         )
         return self._perform_request("get", resource)
@@ -156,7 +157,7 @@ class Socrata(object):
 
         WARNING: This api endpoint might be deprecated.
         '''
-        resource = "/api/views/{0}.{1}".format(dataset_identifier, content_type)
+        resource = "/views/{0}.{1}".format(dataset_identifier, content_type)
         params = {
             "method": "setPermission",
             "value": "public.read" if permission == "public" else permission
@@ -168,7 +169,7 @@ class Socrata(object):
         '''
         Retrieve the metadata for a particular dataset.
         '''
-        resource = "/api/views/{0}.{1}".format(dataset_identifier, content_type)
+        resource = "/views/{0}.{1}".format(dataset_identifier, content_type)
         return self._perform_request("get", resource)
 
     def download_attachments(self, dataset_identifier, content_type="json",
@@ -186,7 +187,7 @@ class Socrata(object):
 
         for attachment in attachments:
             file_path = os.path.join(download_dir, attachment["filename"])
-            resource = "/api/views/{0}/files/{1}?download=true&filename={2}".format(
+            resource = "/views/{0}/files/{1}?download=true&filename={2}".format(
                 dataset_identifier, attachment["assetId"], attachment["filename"])
             uri = "{0}{1}{2}".format(self.uri_prefix, self.domain, resource)
             _download_file(uri, file_path)
@@ -201,7 +202,7 @@ class Socrata(object):
 
         WARNING: This api endpoint might be deprecated.
         '''
-        resource = "/api/views/{0}/publication.{1}".format(dataset_identifier, content_type)
+        resource = "/views/{0}/publication.{1}".format(dataset_identifier, content_type)
 
         return self._perform_request("post", resource)
 
@@ -302,7 +303,7 @@ class Socrata(object):
             resource = "{0}{1}/{2}.{3}".format(DEFAULT_API_PREFIX, dataset_identifier, row_id,
                                                content_type)
         else:
-            resource = "/api/views/{0}.{1}".format(dataset_identifier, content_type)
+            resource = "/views/{0}.{1}".format(dataset_identifier, content_type)
 
         return self._perform_request("delete", resource)
 
@@ -315,7 +316,7 @@ class Socrata(object):
             raise Exception("Unknown request type. Supported request types are"
                             ": {0}".format(", ".join(request_type_methods)))
 
-        uri = "{0}{1}{2}".format(self.uri_prefix, self.domain, resource)
+        uri = "{0}{1}{2}".format(self.uri_prefix, self.core_host, resource)
 
         # set a timeout, just to be safe
         kwargs["timeout"] = self.timeout
@@ -414,4 +415,5 @@ def _download_file(url, local_filename):
         for chunk in response.iter_content(chunk_size=1024):
             if chunk: # filter out keep-alive new chunks
                 outfile.write(chunk)
+
 
